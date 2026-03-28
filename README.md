@@ -15,7 +15,7 @@
 Add `argd` as a dependency in your `dub.json`:
 ```json
 "dependencies": {
-    "argd": "~>1.0.0"
+    "argd": "~>0.0.1"
 }
 ```
 
