@@ -1,0 +1,10 @@
+{
+	"name": "basic",
+	"description": "Basic example of argd usage",
+	"authors": ["zoda"],
+	"license": "MIT",
+	"targetType": "executable",
+	"dependencies": {
+		"argd": { "path": "../../" }
+	}
+}

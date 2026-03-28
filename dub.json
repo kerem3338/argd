@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"zoda"
+	],
+	"copyright": "Copyright © 2026, Kerem ATA (zoda)",
+	"description": "A lightweight, class-based argument and subcommand parsing system for D. Features nested commands, automated help, and flexible argument validation.",
+	"license": "MIT",
+	"name": "argd",
+	"targetType": "library",
+	"subPackages": [
+		"./examples/basic"
+	]
+}
