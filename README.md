@@ -12,11 +12,9 @@
 
 ## Installation
 
-Add `argd` as a dependency in your `dub.json`:
-```json
-"dependencies": {
-    "argd": "~>0.0.1"
-}
+Add `argd` as a dependency in your dub project:
+```shell
+$ dub add argd
 ```
 
 ## Quick Start

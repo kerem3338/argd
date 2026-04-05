@@ -9,5 +9,6 @@
 	"targetType": "library",
 	"subPackages": [
 		"./examples/basic"
-	]
+	],
+	"sourcePaths": ["source"]
 }
