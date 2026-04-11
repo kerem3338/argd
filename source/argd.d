@@ -325,7 +325,7 @@ unittest {
 
     cmd.argCollType = ArgCollectionType.none;
     assert(cmd.validateArgs([]));
-    assert(cmd.validateArgs(["a"]));
+    assert(!cmd.validateArgs(["a"]));
 
     class SubCmd : Command {
         this() { super("sub"); }
