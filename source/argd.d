@@ -168,12 +168,35 @@ public:
                 }
             } else {
                 if (!endOfOptions && preEndArgs.length == 0 && (arg in subCommands)) {
-                    this.options = opts ~ globalOpts;
+                    string[] passOpts = opts ~ globalOpts;
                     if (inheritedValues !is null)
                         foreach (k, v; inheritedValues) { if (k !in values) values[k] = v; }
                     this.optionValues = values;
+                    // Detect verbose/quiet at THIS level and inject canonical forms for children
+                    // Also pre-scan remaining args in case flags come after the subcommand name
+                    string tvLong = "--verbose", tvShort = "-v";
+                    string tqLong = "--quiet",   tqShort = "-q";
+                    foreach (ro; registeredOptions) {
+                        string nl = norm(ro.longName).toLower();
+                        if (nl == "verbose") { tvLong = ro.longName; tvShort = ro.shortName; }
+                        else if (nl == "quiet") { tqLong = ro.longName; tqShort = ro.shortName; }
+                    }
+                    bool pv = passOpts.any!(o => norm(o) == norm(tvLong) || (tvShort.length > 0 && norm(o) == norm(tvShort)));
+                    bool pq = passOpts.any!(o => norm(o) == norm(tqLong) || (tqShort.length > 0 && norm(o) == norm(tqShort)));
+                    // Look ahead in remaining args for parent-level verbose/quiet flags
+                    foreach (remArg; inputArgs[i + 1 .. $]) {
+                        if (remArg.length > 1 && remArg[0] == '-') {
+                            string rn = norm(remArg);
+                            if (rn == norm(tvLong) || (tvShort.length > 0 && rn == norm(tvShort))) pv = true;
+                            if (rn == norm(tqLong) || (tqShort.length > 0 && rn == norm(tqShort))) pq = true;
+                        }
+                    }
+                    if (pv && !passOpts.any!(o => norm(o) == "verbose")) passOpts ~= "--verbose";
+                    if (pq && !passOpts.any!(o => norm(o) == "quiet"))   passOpts ~= "--quiet";
+                    this.options = passOpts;
                     return subCommands[arg].handle(inputArgs[i + 1 .. $], this.options, this.optionValues);
                 }
+
 
                 args ~= arg;
                 if (!endOfOptions) preEndArgs ~= arg;
@@ -195,11 +218,29 @@ public:
                 argCount.to!string ~ " but got " ~ args.length.to!string ~
                 "\n\n" ~ buildHelp());
 
-        bool verbose = hasOption("--verbose", "-v");
-        bool quiet = hasOption("--quiet", "-q");
+        string vLong = "--verbose", vShort = "-v";
+        string qLong = "--quiet",   qShort = "-q";
+
+        foreach (opt; registeredOptions) {
+            string normalizedLong = norm(opt.longName).toLower();
+            if (normalizedLong == "verbose") {
+                vLong = opt.longName;
+                vShort = opt.shortName;
+            } else if (normalizedLong == "quiet") {
+                qLong = opt.longName;
+                qShort = opt.shortName;
+            }
+        }
+
+        bool verbose = hasOption(vLong, vShort) || hasOption(vLong);
+        bool quiet   = hasOption(qLong, qShort) || hasOption(qLong);
+
+
 
         return onExecute(args, verbose, quiet);
     }
+
+
 
 protected:
     bool validateArgs(string[] args) {
@@ -223,20 +264,21 @@ protected:
             out_ ~= "Subcommands:\n";
             foreach (cmd; subCommands) {
                 if (cmd.name != helpLongName)
-                    out_ ~= format("  %-20s %s\n", cmd.name, cmd.description);
+                    out_ ~= format("  %-30s %s\n", cmd.name, cmd.description);
             }
             out_ ~= "\n";
         }
 
         out_ ~= "Options:\n";
-        out_ ~= format("  %-20s %s\n", helpShortName ~ ", " ~ helpLongName, "Show this help message");
+        out_ ~= format("  %-30s %s\n", helpShortName ~ ", " ~ helpLongName, "Show this help message");
         foreach (opt; registeredOptions) {
             string flags = opt.longName;
             if (opt.valueName.length > 0) flags ~= "=<" ~ opt.valueName ~ ">";
             if (opt.shortName.length > 0)
                 flags = opt.shortName ~ ", " ~ flags;
-            out_ ~= format("  %-20s %s\n", flags, opt.description);
+            out_ ~= format("  %-30s %s\n", flags, opt.description);
         }
+
         return out_;
     }
 
